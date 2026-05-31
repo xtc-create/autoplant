@@ -1,0 +1,35 @@
+{
+  "name": "autoplant",
+  "version": "1.0.0",
+  "description": "AutoPlant ESP32 monitor — Node.js + TypeScript + React",
+  "scripts": {
+    "dev": "next dev",
+    "dev:dashboard": "next dev",
+    "dev:server": "tsx watch src/server.ts",
+    "dev:cli": "tsx src/cli.ts",
+    "cli:watch": "tsx src/cli.ts --watch",
+    "cli:latest": "tsx src/cli.ts --latest",
+    "cli:json": "tsx src/cli.ts --json",
+    "build": "tsc",
+    "build:dashboard": "next build",
+    "start": "node dist/server.js",
+    "start:dashboard": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "next": "^16.2.6",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.1.4",
+    "@types/react-dom": "^19.1.4"
+  }
+}
