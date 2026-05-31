@@ -1,12 +1,12 @@
 #!/usr/bin/env tsx
 "use strict";
 /**
- * AutoPlant CLI — run with:  npx tsx src/cli.ts
+ * AutoPlant CLI - ekzekuto me: npx tsx src/cli.ts
  *
- * Flags:
- *   --watch     poll every 30s
- *   --latest    show only the most recent reading
- *   --json      output raw JSON
+ * Opsionet:
+ *   --watch     rifresko çdo 30s
+ *   --latest    shfaq vetëm leximin më të fundit
+ *   --json      shfaq JSON të papërpunuar
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const api_1 = require("./api");
@@ -25,7 +25,7 @@ const CYAN = "\x1b[36m";
 const DIM = "\x1b[2m";
 function colorMoisture(v) {
     if (v == null)
-        return `${DIM}—${RESET}`;
+        return `${DIM}-${RESET}`;
     const status = (0, types_1.getMoistureStatus)(v);
     const color = status === "dry" ? RED : status === "wet" ? BLUE : GREEN;
     return `${color}${v.toFixed(0)}%${RESET} ${DIM}(${types_1.MOISTURE_LABELS[status]})${RESET}`;
@@ -33,23 +33,22 @@ function colorMoisture(v) {
 function printRow(m) {
     const time = new Date(m.recorded_at).toLocaleString();
     console.log(`${DIM}[${m.id}]${RESET} ${CYAN}${time}${RESET}` +
-        `  🌡  ${YELLOW}${m.temperature.toFixed(1)}°C${RESET}` +
-        `  💧 ${BLUE}${m.humidity.toFixed(1)}%${RESET}` +
-        `  🪴 ${colorMoisture(m.moisture)}`);
+        `  temp ${YELLOW}${m.temperature.toFixed(1)} C${RESET}` +
+        `  ajri ${BLUE}${m.humidity.toFixed(1)}%${RESET}` +
+        `  toka ${colorMoisture(m.moisture)}`);
 }
 function printTable(data) {
     const now = new Date().toLocaleTimeString();
     console.clear();
-    console.log(`${BOLD}🌿 AutoPlant — ${data.length} readings  ${DIM}(synced ${now})${RESET}\n`);
-    // Dry soil warning
+    console.log(`${BOLD}AutoPlant - ${data.length} lexime  ${DIM}(sinkronizuar ${now})${RESET}\n`);
     const latest = data[0];
     if (latest?.moisture != null && latest.moisture < 30) {
-        console.log(`${RED}${BOLD}⚠  SOIL IS DRY — moisture at ${latest.moisture.toFixed(0)}%! Water your plant.${RESET}\n`);
+        console.log(`${RED}${BOLD}KUJDES: Toka është e thatë - lagështia ${latest.moisture.toFixed(0)}%. Ujite bimën.${RESET}\n`);
     }
     for (const m of data)
         printRow(m);
     if (WATCH) {
-        console.log(`\n${DIM}Watching… next refresh in 30s  (Ctrl+C to quit)${RESET}`);
+        console.log(`\n${DIM}Duke vëzhguar... rifreskimi tjetër pas 30s (Ctrl+C për dalje)${RESET}`);
     }
 }
 async function run() {
@@ -57,7 +56,7 @@ async function run() {
         if (LATEST) {
             const m = await (0, api_1.fetchLatest)();
             if (!m) {
-                console.log("No readings yet.");
+                console.log("Ende nuk ka lexime.");
                 return;
             }
             if (JSON_OUT) {
@@ -75,7 +74,7 @@ async function run() {
         printTable(data);
     }
     catch (err) {
-        console.error(`${RED}Error: ${err.message}${RESET}`);
+        console.error(`${RED}Gabim: ${err.message}${RESET}`);
         process.exit(1);
     }
 }

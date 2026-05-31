@@ -11,7 +11,7 @@ app.use(express.json());
 
 app.get("/", (_req: Request, res: Response) => {
   res.type("html").send(`<!doctype html>
-<html lang="en">
+<html lang="sq">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -46,8 +46,8 @@ app.get("/", (_req: Request, res: Response) => {
   </head>
   <body>
     <main>
-      <h1>AutoPlant API is running</h1>
-      <p>This is the Express proxy server on port ${PORT}. For the React dashboard, run <code>npm run dev</code> and open the Next.js URL, usually <code>http://localhost:3000</code>.</p>
+      <h1>API i AutoPlant është aktiv</h1>
+      <p>Ky është serveri proxy Express në portën ${PORT}. Për panelin React, ekzekuto <code>npm run dev</code> dhe hap URL-në e Next.js, zakonisht <code>http://localhost:3000</code>.</p>
       <ul>
         <li><a href="/api/measurements"><code>GET /api/measurements</code></a></li>
         <li><a href="/api/latest"><code>GET /api/latest</code></a></li>
@@ -78,7 +78,7 @@ app.get("/api/measurements", async (req: Request, res: Response, next: NextFunct
 app.get("/api/latest", async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const m = await fetchLatest();
-    if (!m) return res.status(404).json({ error: { message: "No readings yet" } });
+    if (!m) return res.status(404).json({ error: { message: "Ende nuk ka lexime" } });
 
     const status = getMoistureStatus(m.moisture);
     res.json({
@@ -96,7 +96,7 @@ app.get("/api/latest", async (_req: Request, res: Response, next: NextFunction) 
 app.get("/api/stats", async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await fetchMeasurements();
-    if (!data.length) return res.status(404).json({ error: { message: "No data" } });
+    if (!data.length) return res.status(404).json({ error: { message: "Nuk ka të dhëna" } });
 
     const temps     = data.map((d) => d.temperature);
     const humids    = data.map((d) => d.humidity);
@@ -137,7 +137,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🌿 AutoPlant server running on http://localhost:${PORT}`);
+  console.log(`AutoPlant serveri është aktiv në http://localhost:${PORT}`);
 });
 
 export default app;

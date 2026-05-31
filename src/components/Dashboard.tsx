@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { Measurement, getMoistureStatus, MOISTURE_LABELS } from "../types";
+import PlantChatbot from "./PlantChatbot";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const CHART_LIMIT = 30;
@@ -22,9 +23,9 @@ const METRICS: Record<
   MetricKey,
   { label: string; short: string; unit: string; color: string; fixedScale?: [number, number] }
 > = {
-  temperature: { label: "Temperature", short: "Temp", unit: "C", color: "#f97316" },
-  humidity: { label: "Humidity", short: "Humidity", unit: "%", color: "#0ea5e9", fixedScale: [0, 100] },
-  moisture: { label: "Soil moisture", short: "Soil", unit: "%", color: "#8b5cf6", fixedScale: [0, 100] },
+  temperature: { label: "Temperatura", short: "Temp", unit: "C", color: "#f97316" },
+  humidity: { label: "Lagështia", short: "Ajri", unit: "%", color: "#0ea5e9", fixedScale: [0, 100] },
+  moisture: { label: "Lagështia e tokës", short: "Toka", unit: "%", color: "#8b5cf6", fixedScale: [0, 100] },
 };
 
 const STATUS_STYLE = {
@@ -93,10 +94,10 @@ function SensorChart({
     <section className="panel chart-panel">
       <div className="panel-header chart-header">
         <div>
-          <span className="eyebrow">API trend</span>
+          <span className="eyebrow">Tendenca nga API</span>
           <h2>{meta.label}</h2>
         </div>
-        <div className="segmented" aria-label="Chart metric">
+        <div className="segmented" aria-label="Metrika e grafikut">
           {(Object.keys(METRICS) as MetricKey[]).map((key) => (
             <button
               key={key}
@@ -111,7 +112,7 @@ function SensorChart({
       </div>
 
       {chartData.length >= 2 ? (
-        <div className="chart-frame" aria-label={`${meta.label} graph from API measurements`}>
+        <div className="chart-frame" aria-label={`Grafiku i ${meta.label.toLowerCase()} nga matjet e API-së`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 12, right: 12, bottom: 6, left: 0 }}>
               <CartesianGrid stroke={gridColor} vertical={false} />
@@ -160,8 +161,8 @@ function SensorChart({
       ) : (
         <div className="empty-chart">
           {metric === "moisture"
-            ? "Waiting for at least two moisture readings from the API."
-            : "Waiting for at least two readings from the API."}
+            ? "Duhen të paktën dy matje të lagështisë së tokës nga API."
+            : "Duhen të paktën dy matje nga API."}
         </div>
       )}
     </section>
@@ -250,7 +251,8 @@ export default function Dashboard() {
           background: var(--bg);
           color: var(--text);
           font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-          padding: 24px;
+          overflow-x: hidden;
+          padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
           transition: background 0.3s ease;
         }
 
@@ -298,20 +300,25 @@ export default function Dashboard() {
         }
 
         .actions {
-          display: flex;
+          display: grid;
+          grid-template-columns: auto auto auto auto;
           align-items: center;
           justify-content: flex-end;
           gap: 8px;
-          flex-wrap: wrap;
         }
 
         .auto-toggle {
           display: inline-flex;
           align-items: center;
           gap: 7px;
+          min-height: 36px;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          padding: 0 10px;
           color: var(--muted);
           cursor: pointer;
           font-size: 12px;
+          white-space: nowrap;
         }
 
         button {
@@ -331,12 +338,13 @@ export default function Dashboard() {
         }
 
         .icon-button {
-          width: 38px;
-          padding: 0;
+          padding: 0 12px;
+          white-space: nowrap;
         }
 
         .text-button {
           padding: 0 14px;
+          white-space: nowrap;
         }
 
         .primary-button {
@@ -397,6 +405,7 @@ export default function Dashboard() {
           font-weight: 500;
           letter-spacing: 0.08em;
           text-transform: uppercase;
+          overflow-wrap: anywhere;
         }
 
         .metric-value {
@@ -427,6 +436,7 @@ export default function Dashboard() {
           border-radius: 6px;
           padding: 4px 8px;
           font-size: 11px;
+          white-space: normal;
         }
 
         .dot {
@@ -497,6 +507,10 @@ export default function Dashboard() {
           overflow-x: auto;
         }
 
+        .mobile-readings {
+          display: none;
+        }
+
         table {
           width: 100%;
           min-width: 620px;
@@ -519,6 +533,50 @@ export default function Dashboard() {
 
         tbody tr:nth-child(even) {
           background: var(--soft);
+        }
+
+        .reading-card {
+          border-bottom: 1px solid var(--border);
+          padding: 13px 14px;
+        }
+
+        .reading-card:last-child {
+          border-bottom: 0;
+        }
+
+        .reading-time {
+          color: var(--muted);
+          font-size: 12px;
+          margin-bottom: 10px;
+        }
+
+        .reading-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+        }
+
+        .reading-field {
+          min-width: 0;
+          border-radius: 8px;
+          background: var(--soft);
+          padding: 9px;
+        }
+
+        .reading-field span {
+          display: block;
+          color: var(--muted);
+          font-size: 9px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .reading-field strong {
+          display: block;
+          margin-top: 5px;
+          overflow-wrap: anywhere;
+          font-size: 13px;
+          font-weight: 650;
         }
 
         .show-row {
@@ -546,6 +604,12 @@ export default function Dashboard() {
           padding: 56px 0;
         }
 
+        @media (max-width: 920px) {
+          .metrics {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
         @media (max-width: 760px) {
           .dashboard {
             padding: 16px;
@@ -559,23 +623,24 @@ export default function Dashboard() {
           }
 
           .actions {
-            display: grid;
-            grid-template-columns: 1fr 38px 1fr 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             justify-content: stretch;
             width: 100%;
           }
 
           .auto-toggle {
-            min-height: 36px;
+            justify-content: center;
+            width: 100%;
+          }
+
+          .icon-button {
+            width: 100%;
           }
 
           .text-button,
           .primary-button {
+            width: 100%;
             padding: 0 10px;
-          }
-
-          .metrics {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
           .metric {
@@ -601,6 +666,14 @@ export default function Dashboard() {
           .chart-frame {
             height: 260px;
           }
+
+          .table-wrap {
+            display: none;
+          }
+
+          .mobile-readings {
+            display: block;
+          }
         }
 
         @media (max-width: 430px) {
@@ -612,23 +685,32 @@ export default function Dashboard() {
             font-size: 21px;
           }
 
-          .actions {
-            grid-template-columns: 1fr 38px;
+          .metric {
+            padding: 13px;
           }
 
-          .actions .text-button,
-          .actions .primary-button {
-            width: 100%;
-          }
-
-          .metrics {
-            grid-template-columns: 1fr;
+          .chart-frame {
+            height: 230px;
           }
 
           .table-panel .panel-header {
             align-items: flex-start;
             flex-direction: column;
             gap: 4px;
+          }
+
+          .reading-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .actions {
+            grid-template-columns: 1fr;
+          }
+
+          .metrics {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>
@@ -637,9 +719,9 @@ export default function Dashboard() {
         {isDry && !alertDismissed && (
           <div className="alert">
             <span>
-              <strong>Soil is dry</strong> - moisture at {fmt(latest?.moisture, 0)}%. Water your plant.
+              <strong>Toka është e thatë</strong> - lagështia është {fmt(latest?.moisture, 0)}%. Ujite bimën.
             </span>
-            <button className="dismiss" type="button" onClick={() => setDismissed(true)} aria-label="Dismiss alert">
+            <button className="dismiss" type="button" onClick={() => setDismissed(true)} aria-label="Mbyll njoftimin">
               x
             </button>
           </div>
@@ -649,7 +731,7 @@ export default function Dashboard() {
           <div>
             <h1>AutoPlant</h1>
             <p className="sync">
-              {loading && !lastFetch ? "connecting..." : lastFetch ? `synced ${lastFetch.toLocaleTimeString()}` : "-"}
+              {loading && !lastFetch ? "duke u lidhur..." : lastFetch ? `sinkronizuar ${lastFetch.toLocaleTimeString()}` : "-"}
             </p>
           </div>
 
@@ -658,8 +740,8 @@ export default function Dashboard() {
               <input type="checkbox" checked={autoRefresh} onChange={(e) => setAuto(e.target.checked)} />
               auto 30s
             </label>
-            <button className="icon-button" type="button" onClick={() => setDark((value) => !value)} aria-label="Toggle theme">
-              {dark ? "L" : "D"}
+            <button className="icon-button" type="button" onClick={() => setDark((value) => !value)} aria-label="Ndrysho temën">
+              {dark ? "Dritë" : "Errët"}
             </button>
             <button
               className={`text-button ${csvFlash ? "exported" : ""}`}
@@ -667,28 +749,28 @@ export default function Dashboard() {
               onClick={handleCSV}
               disabled={!data.length}
             >
-              {csvFlash ? "exported" : "CSV"}
+              {csvFlash ? "u eksportua" : "CSV"}
             </button>
             <button className="primary-button" type="button" onClick={fetchData} disabled={loading}>
-              {loading ? "syncing" : "refresh"}
+              {loading ? "duke sinkr." : "rifresko"}
             </button>
           </div>
         </header>
 
-        {error && <div className="error">{error} - server may be waking up, try refreshing.</div>}
+        {error && <div className="error">{error} - serveri mund të jetë duke u zgjuar, provo ta rifreskosh.</div>}
 
-        <section className="metrics" aria-label="Latest readings">
+        <section className="metrics" aria-label="Leximet e fundit">
           {[
-            { label: "temperature", value: fmt(latest?.temperature), unit: "C", color: "#f97316" },
-            { label: "humidity", value: fmt(latest?.humidity), unit: "%", color: "#0ea5e9" },
+            { label: "temperatura", value: fmt(latest?.temperature), unit: "C", color: "#f97316" },
+            { label: "lagështia", value: fmt(latest?.humidity), unit: "%", color: "#0ea5e9" },
             {
-              label: "soil moisture",
+              label: "lagështia e tokës",
               value: latest?.moisture != null ? fmt(latest.moisture, 0) : "-",
               unit: latest?.moisture != null ? "%" : "",
               color: "#8b5cf6",
               badge: latest?.moisture != null,
             },
-            { label: "readings", value: String(data.length || "-"), unit: "", color: "#16a34a" },
+            { label: "lexime", value: String(data.length || "-"), unit: "", color: "#16a34a" },
           ].map(({ label, value, unit, color, badge }) => (
             <article className="metric" key={label}>
               <p className="metric-label">{label}</p>
@@ -713,14 +795,14 @@ export default function Dashboard() {
         {data.length > 0 && (
           <section className="panel table-panel">
             <div className="panel-header">
-              <span className="eyebrow">Readings log</span>
-              <span className="sync">{data.length} total</span>
+              <span className="eyebrow">Lista e leximeve</span>
+              <span className="sync">{data.length} gjithsej</span>
             </div>
             <div className="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    {["timestamp", "temp C", "humidity %", "soil"].map((header) => (
+                    {["koha", "temp C", "lagështia %", "toka"].map((header) => (
                       <th key={header}>{header}</th>
                     ))}
                   </tr>
@@ -732,10 +814,10 @@ export default function Dashboard() {
 
                     return (
                       <tr key={row.id}>
-                        <td>{fmtTime(row.recorded_at)}</td>
-                        <td style={{ color: "#f97316" }}>{fmt(row.temperature)}</td>
-                        <td style={{ color: "#0ea5e9" }}>{fmt(row.humidity)}</td>
-                        <td>
+                        <td data-label="koha">{fmtTime(row.recorded_at)}</td>
+                        <td data-label="temp C" style={{ color: "#f97316" }}>{fmt(row.temperature)}</td>
+                        <td data-label="lagështia" style={{ color: "#0ea5e9" }}>{fmt(row.humidity)}</td>
+                        <td data-label="toka">
                           {row.moisture != null ? (
                             <span className="badge" style={{ background: rowStyle.bg, color: rowStyle.color }}>
                               <span className="dot" style={{ background: rowStyle.dot }} />
@@ -753,10 +835,40 @@ export default function Dashboard() {
                 </tbody>
               </table>
             </div>
+            <div className="mobile-readings">
+              {rows.map((row) => {
+                const rowStatus = getMoistureStatus(row.moisture);
+                const rowStyle = STATUS_STYLE[rowStatus];
+
+                return (
+                  <article className="reading-card" key={`mobile-${row.id}`}>
+                    <p className="reading-time">{fmtTime(row.recorded_at)}</p>
+                    <div className="reading-grid">
+                      <div className="reading-field">
+                        <span>temp</span>
+                        <strong style={{ color: "#f97316" }}>{fmt(row.temperature)} C</strong>
+                      </div>
+                      <div className="reading-field">
+                        <span>ajri</span>
+                        <strong style={{ color: "#0ea5e9" }}>{fmt(row.humidity)}%</strong>
+                      </div>
+                      <div className="reading-field">
+                        <span>toka</span>
+                        {row.moisture != null ? (
+                          <strong style={{ color: rowStyle.color }}>{fmt(row.moisture, 0)}%</strong>
+                        ) : (
+                          <strong>-</strong>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
             {data.length > 15 && (
               <div className="show-row">
                 <button className="text-button" type="button" onClick={() => setShowAll((value) => !value)}>
-                  {showAll ? "show less" : `show all ${data.length} readings`}
+                  {showAll ? "shfaq më pak" : `shfaq të ${data.length} leximet`}
                 </button>
               </div>
             )}
@@ -764,8 +876,10 @@ export default function Dashboard() {
         )}
 
         {!loading && !data.length && !error && (
-          <div className="empty-state">No readings yet. Press measure on the ESP32.</div>
+          <div className="empty-state">Ende nuk ka lexime. Shtyp matjen në ESP32.</div>
         )}
+
+        <PlantChatbot />
       </div>
     </main>
   );

@@ -12,8 +12,8 @@ function getMoistureStatus(moisture) {
     return "wet";
 }
 exports.MOISTURE_LABELS = {
-    dry: "Dry — needs water",
-    moist: "Moist — good",
-    wet: "Very wet",
-    unknown: "No data",
+    dry: "E thatë - ka nevojë për ujë",
+    moist: "E lagësht - në rregull",
+    wet: "Shumë e lagësht",
+    unknown: "Pa të dhëna",
 };
