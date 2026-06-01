@@ -10,7 +10,7 @@
     "cli:watch": "tsx src/cli.ts --watch",
     "cli:latest": "tsx src/cli.ts --latest",
     "cli:json": "tsx src/cli.ts --json",
-    "build": "tsc",
+    "build": "next build",
     "build:dashboard": "next build",
     "start": "node dist/server.js",
     "start:dashboard": "next start",
