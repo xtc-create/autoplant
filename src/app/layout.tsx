@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
 
 export const metadata = {
-  title: "Paneli AutoPlant",
-  description: "Panel i drejtpërdrejtë për monitorimin e bimës me ESP32",
+  title: "AutoPlant",
+  description: "ESP32 plant monitoring dashboard with live sensor data and plant AI.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="sq">
+    <html lang="en">
       <body style={{ margin: 0 }}>{children}</body>
     </html>
   );

@@ -1,65 +1,73 @@
 # AutoPlant - Node.js + TypeScript + React
 
-Projekt full-stack në TypeScript për monitorimin e bimës AutoPlant me ESP32.
+Full-stack TypeScript project for the AutoPlant ESP32 plant monitor.
 
-## Struktura
+## Structure
 
 ```text
 src/
-|-- app/                  # Rruga e panelit në Next.js
+|-- app/
+|   |-- page.tsx           # Landing page
+|   |-- dashboard/page.tsx # React dashboard route
+|   `-- api/plant-chat    # Gemini chat API route
 |-- components/
-|   |-- Dashboard.tsx     # Paneli React
-|   `-- PlantChatbot.tsx  # Chatbot-i për bimën
-|-- types.ts              # Tipet e përbashkëta
-|-- api.ts                # Ndihmësit për fetch
-|-- server.ts             # Serveri proxy Express API
-`-- cli.ts                # Shikuesi në terminal
+|   |-- Dashboard.tsx
+|   `-- PlantChatbot.tsx
+|-- types.ts
+|-- api.ts
+|-- server.ts
+`-- cli.ts
 ```
 
-## Instalimi
+## Setup
 
 ```bash
 npm install
 ```
 
-## Zhvillimi lokal
+## Local Development
 
-Nise API proxy në një terminal:
+Run the API proxy in one terminal:
 
 ```bash
 npm run dev:server
 ```
 
-Hap `http://localhost:3001` për faqen e statusit të API-së.
+Open `http://localhost:3001` for the API status page.
 
-Nise panelin në një terminal tjetër:
+Run the Next app in another terminal:
 
 ```bash
 npm run dev
 ```
 
-Hap `http://localhost:3000` për panelin React.
+Routes:
 
-Paneli thërret `http://localhost:3001` si parazgjedhje. Për ta ndryshuar, vendos:
+```text
+http://localhost:3000           # landing page
+http://localhost:3000/dashboard # dashboard
+```
+
+The dashboard calls `http://localhost:3001` by default. To point it somewhere else, set:
 
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
 
-Për chatbot-in me Gemini, vendos çelësin në `.env.local`:
+For the Gemini chatbot, set the key in `.env.local`:
 
 ```bash
 GEMINI_API_KEY=...
 ```
 
-## Endpoint-et e API-së
+## API Endpoints
 
-- `GET /api/measurements?limit=N` - të gjitha leximet, me limit opsional
-- `GET /api/latest` - leximi më i fundit me gjendjen e lagështisë dhe sinjalizim
-- `GET /api/stats` - minimumi, maksimumi dhe mesatarja për sensorët
-- `POST /api/plant-chat` - pyetje për chatbot-in e bimës
+- `GET /api/measurements?limit=N` - all readings, optional limit
+- `GET /api/latest` - latest reading with moisture status and alert flag
+- `GET /api/stats` - min/max/average sensor stats
+- `POST /api/plant-chat` - plant AI chat endpoint
 
-Backend-i merr të dhënat nga:
+The backend proxies measurement data from:
 
 ```text
 https://autoplant.onrender.com/measurement
@@ -68,13 +76,13 @@ https://autoplant.onrender.com/measurement
 ## CLI
 
 ```bash
-npm run dev:cli           # shfaq të gjitha leximet
-npm run cli:latest        # shfaq vetëm leximin më të fundit
-npm run cli:watch         # rifresko automatikisht çdo 30s
-npm run cli:json          # shfaq JSON të papërpunuar
+npm run dev:cli
+npm run cli:latest
+npm run cli:watch
+npm run cli:json
 ```
 
-## Kontrollet
+## Checks
 
 ```bash
 npm run typecheck
@@ -82,16 +90,16 @@ npm run build
 npm run build:dashboard
 ```
 
-## Prodhimi
+## Production
 
-Kompilo dhe nise serverin API:
+Compile and run the API server:
 
 ```bash
 npm run build
 npm start
 ```
 
-Kompilo dhe nise panelin:
+Build and run the Next app:
 
 ```bash
 npm run build:dashboard
