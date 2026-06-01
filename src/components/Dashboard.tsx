@@ -14,7 +14,7 @@ import {
 import { Measurement, getMoistureStatus, MOISTURE_LABELS } from "../types";
 import PlantChatbot from "./PlantChatbot";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
 const CHART_LIMIT = 30;
 
 type MetricKey = "temperature" | "humidity" | "moisture";

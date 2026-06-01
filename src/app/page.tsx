@@ -236,7 +236,7 @@ export default function LandingPage() {
 
           <div className="hero-actions">
             <Link className="primary-link" href="/dashboard">Hap panelin</Link>
-            <a className="secondary-link" href="http://localhost:3001/api/latest">Shiko API-në</a>
+            <a className="secondary-link" href="/api/latest">Shiko API-në</a>
           </div>
 
           <div className="quick-stats" aria-label="Pikat kryesore të AutoPlant">
