@@ -104,7 +104,7 @@ export default function PlantChatbot() {
 
         .chat-head h2 {
           margin: 0;
-          font-size: 16px;
+          font-size: 17px;
         }
 
         .chat-body {
@@ -122,7 +122,7 @@ export default function PlantChatbot() {
           border-radius: 8px;
           padding: 10px 12px;
           color: var(--text);
-          font-size: 13px;
+          font-size: 14px;
           line-height: 1.55;
           overflow-wrap: anywhere;
         }
@@ -181,7 +181,7 @@ export default function PlantChatbot() {
           background: var(--surface);
           color: var(--text);
           font: inherit;
-          font-size: 13px;
+          font-size: 14px;
           padding: 0 12px;
         }
 
@@ -196,7 +196,7 @@ export default function PlantChatbot() {
           border-radius: 8px;
           background: rgba(220,38,38,0.08);
           color: #dc2626;
-          font-size: 12px;
+          font-size: 13px;
           padding: 10px 12px;
         }
 

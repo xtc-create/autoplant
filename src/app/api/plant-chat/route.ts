@@ -56,6 +56,32 @@ function isQuotaError(status: number, message: string) {
   return status === 429 || normalized.includes("quota") || normalized.includes("rate limit");
 }
 
+function fallbackReply(latest: Measurement | null) {
+  if (!latest) {
+    return "Gemini is unavailable right now, but I can still read the sensors. There are no plant readings yet, so press measure on the ESP32 first.";
+  }
+
+  const status = getMoistureStatus(latest.moisture);
+  const moisture =
+    latest.moisture == null ? "not measured" : `${latest.moisture.toFixed(0)}%`;
+  const temperature = latest.temperature.toFixed(1);
+  const humidity = latest.humidity.toFixed(1);
+
+  if (status === "dry") {
+    return `Gemini is unavailable right now, but based on the latest sensors: soil moisture is ${moisture}, temperature is ${temperature} C, and air humidity is ${humidity}%. The soil is dry, so water the plant now, then check moisture again after a few minutes.`;
+  }
+
+  if (status === "moist") {
+    return `Gemini is unavailable right now, but based on the latest sensors: soil moisture is ${moisture}, temperature is ${temperature} C, and air humidity is ${humidity}%. The soil looks okay, so do not water yet. Keep monitoring it.`;
+  }
+
+  if (status === "wet") {
+    return `Gemini is unavailable right now, but based on the latest sensors: soil moisture is ${moisture}, temperature is ${temperature} C, and air humidity is ${humidity}%. The soil is very wet, so avoid watering and let it drain/dry a bit.`;
+  }
+
+  return `Gemini is unavailable right now, but based on the latest sensors: temperature is ${temperature} C and air humidity is ${humidity}%. Soil moisture has not been measured yet, so press the moisture button on the ESP32 before deciding whether to water.`;
+}
+
 function geminiUrl(model: string, apiKey: string) {
   return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
 }
@@ -149,16 +175,22 @@ export async function POST(req: NextRequest) {
 
     const hasQuotaError = failures.some((failure) => isQuotaError(429, failure));
 
+    if (hasQuotaError) {
+      return NextResponse.json({
+        reply: fallbackReply(latest),
+        latest,
+        model: "local-fallback",
+      });
+    }
+
     return NextResponse.json(
       {
         error: {
-          message: hasQuotaError
-            ? "Gemini quota or billing is blocking this API key. Try another key or check Google AI Studio."
-            : `No Gemini model worked with this API key. Tried: ${GEMINI_MODELS.join(", ")}.`,
+          message: `No Gemini model worked with this API key. Tried: ${GEMINI_MODELS.join(", ")}.`,
           details: failures,
         },
       },
-      { status: hasQuotaError ? 429 : 502 }
+      { status: 502 }
     );
   } catch (error) {
     return NextResponse.json(

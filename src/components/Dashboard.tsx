@@ -19,19 +19,23 @@ const CHART_LIMIT = 30;
 
 type MetricKey = "temperature" | "humidity" | "moisture";
 
+const ACCENT = "#16845b";
+const DANGER = "#b42318";
+const COOL = "#23637a";
+
 const METRICS: Record<
   MetricKey,
   { label: string; short: string; unit: string; color: string; fixedScale?: [number, number] }
 > = {
-  temperature: { label: "Temperatura", short: "Temp", unit: "C", color: "#f97316" },
-  humidity: { label: "Lagështia", short: "Ajri", unit: "%", color: "#0ea5e9", fixedScale: [0, 100] },
-  moisture: { label: "Lagështia e tokës", short: "Toka", unit: "%", color: "#8b5cf6", fixedScale: [0, 100] },
+  temperature: { label: "Temperatura", short: "Temp", unit: "C", color: ACCENT },
+  humidity: { label: "Lageshtia", short: "Ajri", unit: "%", color: ACCENT, fixedScale: [0, 100] },
+  moisture: { label: "Lageshtia e tokes", short: "Toka", unit: "%", color: ACCENT, fixedScale: [0, 100] },
 };
 
 const STATUS_STYLE = {
-  dry: { color: "#dc2626", bg: "rgba(220,38,38,0.1)", dot: "#dc2626" },
-  moist: { color: "#16a34a", bg: "rgba(22,163,74,0.1)", dot: "#16a34a" },
-  wet: { color: "#2563eb", bg: "rgba(37,99,235,0.1)", dot: "#2563eb" },
+  dry: { color: DANGER, bg: "rgba(180,35,24,0.1)", dot: DANGER },
+  moist: { color: ACCENT, bg: "rgba(22,132,91,0.1)", dot: ACCENT },
+  wet: { color: COOL, bg: "rgba(35,99,122,0.1)", dot: COOL },
   unknown: { color: "#64748b", bg: "rgba(100,116,139,0.1)", dot: "#64748b" },
 };
 
@@ -74,27 +78,25 @@ function SensorChart({
   const chartData = useMemo(
     () =>
       data
-      .slice(0, CHART_LIMIT)
-      .reverse()
-      .map((reading) => ({
-        label: fmtTime(reading.recorded_at),
-        time: reading.recorded_at,
-        value: reading[metric] == null ? null : Number(reading[metric]),
-      }))
-      .filter((reading) => reading.value != null),
+        .slice(0, CHART_LIMIT)
+        .reverse()
+        .map((reading) => ({
+          label: fmtTime(reading.recorded_at),
+          value: reading[metric] == null ? null : Number(reading[metric]),
+        }))
+        .filter((reading) => reading.value != null),
     [data, metric]
   );
 
   const meta = METRICS[metric];
-  const gridColor = dark ? "rgba(226,232,240,0.14)" : "rgba(15,23,42,0.12)";
+  const gridColor = dark ? "rgba(226,232,240,0.13)" : "rgba(20,83,45,0.14)";
   const muted = dark ? "#94a3b8" : "#64748b";
-  const axisColor = dark ? "#cbd5e1" : "#334155";
+  const tooltipText = dark ? "#e2e8f0" : "#17251d";
 
   return (
     <section className="panel chart-panel">
       <div className="panel-header chart-header">
         <div>
-          <span className="eyebrow">Tendenca nga API</span>
           <h2>{meta.label}</h2>
         </div>
         <div className="segmented" aria-label="Metrika e grafikut">
@@ -112,7 +114,7 @@ function SensorChart({
       </div>
 
       {chartData.length >= 2 ? (
-        <div className="chart-frame" aria-label={`Grafiku i ${meta.label.toLowerCase()} nga matjet e API-së`}>
+        <div className="chart-frame" aria-label={`Grafiku i ${meta.label.toLowerCase()} nga matjet e API`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 12, right: 12, bottom: 6, left: 0 }}>
               <CartesianGrid stroke={gridColor} vertical={false} />
@@ -136,12 +138,12 @@ function SensorChart({
                   `${Number(value).toFixed(metric === "temperature" ? 1 : 0)}${meta.unit}`,
                   meta.label,
                 ]}
-                labelStyle={{ color: axisColor }}
+                labelStyle={{ color: tooltipText }}
                 contentStyle={{
-                  background: dark ? "#111827" : "#ffffff",
+                  background: dark ? "#101513" : "#ffffff",
                   border: `1px solid ${gridColor}`,
                   borderRadius: 8,
-                  color: axisColor,
+                  color: tooltipText,
                   fontSize: 12,
                 }}
               />
@@ -161,8 +163,8 @@ function SensorChart({
       ) : (
         <div className="empty-chart">
           {metric === "moisture"
-            ? "Duhen të paktën dy matje të lagështisë së tokës nga API."
-            : "Duhen të paktën dy matje nga API."}
+            ? "Duhen te pakten dy matje te lageshtise se tokes nga API."
+            : "Duhen te pakten dy matje nga API."}
         </div>
       )}
     </section>
@@ -220,12 +222,13 @@ export default function Dashboard() {
   const rows = showAll ? data : data.slice(0, 15);
 
   const theme = {
-    bg: dark ? "#0d0f10" : "#f8fafc",
-    surface: dark ? "#161a1d" : "#ffffff",
-    border: dark ? "rgba(255,255,255,0.08)" : "rgba(15,23,42,0.1)",
-    text: dark ? "#e2e8f0" : "#0f172a",
-    muted: dark ? "#94a3b8" : "#64748b",
-    soft: dark ? "rgba(255,255,255,0.04)" : "rgba(15,23,42,0.035)",
+    bg: dark ? "#0f1412" : "#f6f8f5",
+    surface: dark ? "#151b18" : "#ffffff",
+    border: dark ? "rgba(226,232,240,0.1)" : "rgba(20,83,45,0.12)",
+    text: dark ? "#e5e7eb" : "#17251d",
+    muted: dark ? "#9ca3af" : "#68776d",
+    soft: dark ? "rgba(255,255,255,0.045)" : "rgba(22,132,91,0.055)",
+    accent: ACCENT,
   };
 
   const cssVars = {
@@ -235,6 +238,7 @@ export default function Dashboard() {
     "--text": theme.text,
     "--muted": theme.muted,
     "--soft": theme.soft,
+    "--accent": theme.accent,
   } as CSSProperties;
 
   function handleCSV() {
@@ -243,6 +247,18 @@ export default function Dashboard() {
     setTimeout(() => setCsvFlash(false), 1600);
   }
 
+  const metrics = [
+    { label: "temperatura", value: fmt(latest?.temperature), unit: "C" },
+    { label: "lageshtia", value: fmt(latest?.humidity), unit: "%" },
+    {
+      label: "lageshtia e tokes",
+      value: latest?.moisture != null ? fmt(latest.moisture, 0) : "-",
+      unit: latest?.moisture != null ? "%" : "",
+      badge: latest?.moisture != null,
+    },
+    { label: "lexime", value: String(data.length || "-"), unit: "" },
+  ];
+
   return (
     <main className="dashboard" style={cssVars}>
       <style>{`
@@ -250,10 +266,10 @@ export default function Dashboard() {
           min-height: 100vh;
           background: var(--bg);
           color: var(--text);
-          font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+          font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          font-size: 15px;
           overflow-x: hidden;
           padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
-          transition: background 0.3s ease;
         }
 
         .dashboard-shell {
@@ -281,14 +297,14 @@ export default function Dashboard() {
         }
 
         h1 {
-          font-size: 24px;
-          font-weight: 650;
+          font-size: 26px;
+          font-weight: 700;
           letter-spacing: 0;
         }
 
         h2 {
           margin-top: 4px;
-          font-size: 16px;
+          font-size: 17px;
           font-weight: 650;
           letter-spacing: 0;
         }
@@ -296,7 +312,7 @@ export default function Dashboard() {
         .sync {
           margin-top: 5px;
           color: var(--muted);
-          font-size: 12px;
+          font-size: 13px;
         }
 
         .actions {
@@ -307,29 +323,31 @@ export default function Dashboard() {
           gap: 8px;
         }
 
-        .auto-toggle {
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          min-height: 36px;
-          border: 1px solid var(--border);
-          border-radius: 8px;
-          padding: 0 10px;
-          color: var(--muted);
-          cursor: pointer;
-          font-size: 12px;
-          white-space: nowrap;
-        }
-
+        .auto-toggle,
         button {
           min-height: 36px;
           border: 1px solid var(--border);
           border-radius: 8px;
           background: transparent;
           color: var(--text);
-          cursor: pointer;
           font: inherit;
-          font-size: 12px;
+          font-size: 13px;
+        }
+
+        .auto-toggle {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 0 10px;
+          color: var(--muted);
+          cursor: pointer;
+          white-space: nowrap;
+        }
+
+        button {
+          cursor: pointer;
+          padding: 0 12px;
+          white-space: nowrap;
         }
 
         button:disabled {
@@ -337,27 +355,17 @@ export default function Dashboard() {
           opacity: 0.62;
         }
 
-        .icon-button {
-          padding: 0 12px;
-          white-space: nowrap;
-        }
-
-        .text-button {
-          padding: 0 14px;
-          white-space: nowrap;
-        }
-
         .primary-button {
           border-color: transparent;
-          background: #22c55e;
-          color: #052e16;
-          font-weight: 650;
+          background: var(--accent);
+          color: #ffffff;
+          font-weight: 700;
         }
 
         .exported {
-          border-color: rgba(34,197,94,0.55);
-          background: rgba(34,197,94,0.12);
-          color: #16a34a;
+          border-color: rgba(22,132,91,0.45);
+          background: rgba(22,132,91,0.12);
+          color: var(--accent);
         }
 
         .alert,
@@ -370,15 +378,14 @@ export default function Dashboard() {
 
         .alert {
           margin-bottom: 18px;
-          border-color: rgba(220,38,38,0.35);
-          background: rgba(220,38,38,0.09);
+          border-color: rgba(180,35,24,0.28);
+          background: rgba(180,35,24,0.08);
           padding: 12px 14px;
-          color: #dc2626;
-          font-size: 13px;
+          color: ${DANGER};
+          font-size: 14px;
         }
 
         .dismiss {
-          width: 34px;
           min-width: 34px;
           border: 0;
           color: var(--muted);
@@ -402,7 +409,7 @@ export default function Dashboard() {
         th {
           color: var(--muted);
           font-size: 10px;
-          font-weight: 500;
+          font-weight: 600;
           letter-spacing: 0.08em;
           text-transform: uppercase;
           overflow-wrap: anywhere;
@@ -417,14 +424,16 @@ export default function Dashboard() {
 
         .metric-number {
           overflow-wrap: anywhere;
-          font-size: 28px;
-          font-weight: 650;
+          color: var(--accent);
+          font-size: 30px;
+          font-weight: 700;
           line-height: 1;
         }
 
-        .metric-unit {
+        .metric-unit,
+        .reading-time {
           color: var(--muted);
-          font-size: 12px;
+          font-size: 13px;
         }
 
         .badge {
@@ -435,7 +444,7 @@ export default function Dashboard() {
           margin-top: 9px;
           border-radius: 6px;
           padding: 4px 8px;
-          font-size: 11px;
+          font-size: 12px;
           white-space: normal;
         }
 
@@ -467,7 +476,6 @@ export default function Dashboard() {
           min-height: 34px;
           border: 0;
           border-radius: 0;
-          padding: 0 12px;
           color: var(--muted);
         }
 
@@ -489,7 +497,7 @@ export default function Dashboard() {
           border-radius: 8px;
           background: var(--soft);
           color: var(--muted);
-          font-size: 13px;
+          font-size: 14px;
           text-align: center;
           padding: 20px;
         }
@@ -515,7 +523,7 @@ export default function Dashboard() {
           width: 100%;
           min-width: 620px;
           border-collapse: collapse;
-          font-size: 12px;
+          font-size: 13px;
         }
 
         th,
@@ -545,8 +553,6 @@ export default function Dashboard() {
         }
 
         .reading-time {
-          color: var(--muted);
-          font-size: 12px;
           margin-bottom: 10px;
         }
 
@@ -567,6 +573,7 @@ export default function Dashboard() {
           display: block;
           color: var(--muted);
           font-size: 9px;
+          font-weight: 600;
           letter-spacing: 0.08em;
           text-transform: uppercase;
         }
@@ -575,8 +582,9 @@ export default function Dashboard() {
           display: block;
           margin-top: 5px;
           overflow-wrap: anywhere;
-          font-size: 13px;
-          font-weight: 650;
+          color: var(--accent);
+          font-size: 14px;
+          font-weight: 700;
         }
 
         .show-row {
@@ -589,14 +597,14 @@ export default function Dashboard() {
           border-radius: 8px;
           padding: 18px;
           text-align: center;
-          font-size: 13px;
+          font-size: 14px;
         }
 
         .error {
           margin-bottom: 14px;
-          border: 1px solid rgba(220,38,38,0.28);
-          background: rgba(220,38,38,0.08);
-          color: #dc2626;
+          border: 1px solid rgba(180,35,24,0.24);
+          background: rgba(180,35,24,0.07);
+          color: ${DANGER};
         }
 
         .empty-state {
@@ -628,19 +636,10 @@ export default function Dashboard() {
             width: 100%;
           }
 
-          .auto-toggle {
+          .auto-toggle,
+          .actions button {
             justify-content: center;
             width: 100%;
-          }
-
-          .icon-button {
-            width: 100%;
-          }
-
-          .text-button,
-          .primary-button {
-            width: 100%;
-            padding: 0 10px;
           }
 
           .metric {
@@ -648,7 +647,7 @@ export default function Dashboard() {
           }
 
           .metric-number {
-            font-size: 24px;
+            font-size: 26px;
           }
 
           .segmented {
@@ -682,7 +681,7 @@ export default function Dashboard() {
           }
 
           h1 {
-            font-size: 21px;
+            font-size: 23px;
           }
 
           .metric {
@@ -705,10 +704,7 @@ export default function Dashboard() {
         }
 
         @media (max-width: 360px) {
-          .actions {
-            grid-template-columns: 1fr;
-          }
-
+          .actions,
           .metrics {
             grid-template-columns: 1fr;
           }
@@ -719,7 +715,7 @@ export default function Dashboard() {
         {isDry && !alertDismissed && (
           <div className="alert">
             <span>
-              <strong>Toka është e thatë</strong> - lagështia është {fmt(latest?.moisture, 0)}%. Ujite bimën.
+              <strong>Toka eshte e thate</strong> - lageshtia eshte {fmt(latest?.moisture, 0)}%. Ujite bimen.
             </span>
             <button className="dismiss" type="button" onClick={() => setDismissed(true)} aria-label="Mbyll njoftimin">
               x
@@ -740,8 +736,8 @@ export default function Dashboard() {
               <input type="checkbox" checked={autoRefresh} onChange={(e) => setAuto(e.target.checked)} />
               auto 30s
             </label>
-            <button className="icon-button" type="button" onClick={() => setDark((value) => !value)} aria-label="Ndrysho temën">
-              {dark ? "Dritë" : "Errët"}
+            <button type="button" onClick={() => setDark((value) => !value)} aria-label="Ndrysho temen">
+              {dark ? "Drite" : "Erret"}
             </button>
             <button
               className={`text-button ${csvFlash ? "exported" : ""}`}
@@ -757,27 +753,14 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {error && <div className="error">{error} - serveri mund të jetë duke u zgjuar, provo ta rifreskosh.</div>}
+        {error && <div className="error">{error}</div>}
 
         <section className="metrics" aria-label="Leximet e fundit">
-          {[
-            { label: "temperatura", value: fmt(latest?.temperature), unit: "C", color: "#f97316" },
-            { label: "lagështia", value: fmt(latest?.humidity), unit: "%", color: "#0ea5e9" },
-            {
-              label: "lagështia e tokës",
-              value: latest?.moisture != null ? fmt(latest.moisture, 0) : "-",
-              unit: latest?.moisture != null ? "%" : "",
-              color: "#8b5cf6",
-              badge: latest?.moisture != null,
-            },
-            { label: "lexime", value: String(data.length || "-"), unit: "", color: "#16a34a" },
-          ].map(({ label, value, unit, color, badge }) => (
+          {metrics.map(({ label, value, unit, badge }) => (
             <article className="metric" key={label}>
               <p className="metric-label">{label}</p>
               <div className="metric-value">
-                <span className="metric-number" style={{ color }}>
-                  {value}
-                </span>
+                <span className="metric-number">{value}</span>
                 {unit && <span className="metric-unit">{unit}</span>}
               </div>
               {badge && (
@@ -802,7 +785,7 @@ export default function Dashboard() {
               <table>
                 <thead>
                   <tr>
-                    {["koha", "temp C", "lagështia %", "toka"].map((header) => (
+                    {["koha", "temp C", "lageshtia %", "toka"].map((header) => (
                       <th key={header}>{header}</th>
                     ))}
                   </tr>
@@ -814,10 +797,10 @@ export default function Dashboard() {
 
                     return (
                       <tr key={row.id}>
-                        <td data-label="koha">{fmtTime(row.recorded_at)}</td>
-                        <td data-label="temp C" style={{ color: "#f97316" }}>{fmt(row.temperature)}</td>
-                        <td data-label="lagështia" style={{ color: "#0ea5e9" }}>{fmt(row.humidity)}</td>
-                        <td data-label="toka">
+                        <td>{fmtTime(row.recorded_at)}</td>
+                        <td>{fmt(row.temperature)}</td>
+                        <td>{fmt(row.humidity)}</td>
+                        <td>
                           {row.moisture != null ? (
                             <span className="badge" style={{ background: rowStyle.bg, color: rowStyle.color }}>
                               <span className="dot" style={{ background: rowStyle.dot }} />
@@ -837,28 +820,21 @@ export default function Dashboard() {
             </div>
             <div className="mobile-readings">
               {rows.map((row) => {
-                const rowStatus = getMoistureStatus(row.moisture);
-                const rowStyle = STATUS_STYLE[rowStatus];
-
                 return (
                   <article className="reading-card" key={`mobile-${row.id}`}>
                     <p className="reading-time">{fmtTime(row.recorded_at)}</p>
                     <div className="reading-grid">
                       <div className="reading-field">
                         <span>temp</span>
-                        <strong style={{ color: "#f97316" }}>{fmt(row.temperature)} C</strong>
+                        <strong>{fmt(row.temperature)} C</strong>
                       </div>
                       <div className="reading-field">
                         <span>ajri</span>
-                        <strong style={{ color: "#0ea5e9" }}>{fmt(row.humidity)}%</strong>
+                        <strong>{fmt(row.humidity)}%</strong>
                       </div>
                       <div className="reading-field">
                         <span>toka</span>
-                        {row.moisture != null ? (
-                          <strong style={{ color: rowStyle.color }}>{fmt(row.moisture, 0)}%</strong>
-                        ) : (
-                          <strong>-</strong>
-                        )}
+                        <strong>{row.moisture != null ? `${fmt(row.moisture, 0)}%` : "-"}</strong>
                       </div>
                     </div>
                   </article>
@@ -868,7 +844,7 @@ export default function Dashboard() {
             {data.length > 15 && (
               <div className="show-row">
                 <button className="text-button" type="button" onClick={() => setShowAll((value) => !value)}>
-                  {showAll ? "shfaq më pak" : `shfaq të ${data.length} leximet`}
+                  {showAll ? "shfaq me pak" : `shfaq te ${data.length} leximet`}
                 </button>
               </div>
             )}
@@ -876,7 +852,7 @@ export default function Dashboard() {
         )}
 
         {!loading && !data.length && !error && (
-          <div className="empty-state">Ende nuk ka lexime. Shtyp matjen në ESP32.</div>
+          <div className="empty-state">Ende nuk ka lexime. Shtyp matjen ne ESP32.</div>
         )}
 
         <PlantChatbot />
