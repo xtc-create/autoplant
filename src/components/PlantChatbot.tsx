@@ -7,11 +7,39 @@ type Message = {
   content: string;
 };
 
+function renderMarkdownLine(line: string) {
+  const parts = line.split(/(\*\*[^*]+\*\*)/g);
+
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={index}>{part.slice(2, -2)}</strong>;
+    }
+
+    return <span key={index}>{part}</span>;
+  });
+}
+
+function ChatText({ text }: { text: string }) {
+  return (
+    <>
+      {text.split("\n").map((line, index) => {
+        const bullet = line.match(/^\s*[*-]\s+(.*)$/);
+
+        return (
+          <p className={bullet ? "chat-line bullet" : "chat-line"} key={index}>
+            {bullet ? renderMarkdownLine(bullet[1]) : renderMarkdownLine(line)}
+          </p>
+        );
+      })}
+    </>
+  );
+}
+
 export default function PlantChatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Më pyet për bimën, ujitjen, lagështinë, temperaturën ose leximin më të fundit të sensorëve.",
+      content: "Ask me about your plant, watering, humidity, temperature, or the latest sensor reading.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -75,7 +103,7 @@ export default function PlantChatbot() {
         }
 
         .chat-head h2 {
-          margin: 4px 0 0;
+          margin: 0;
           font-size: 16px;
         }
 
@@ -96,8 +124,32 @@ export default function PlantChatbot() {
           color: var(--text);
           font-size: 13px;
           line-height: 1.55;
-          white-space: pre-wrap;
           overflow-wrap: anywhere;
+        }
+
+        .chat-line {
+          margin: 0;
+          min-height: 1.55em;
+        }
+
+        .chat-line + .chat-line {
+          margin-top: 4px;
+        }
+
+        .chat-line.bullet {
+          position: relative;
+          padding-left: 16px;
+        }
+
+        .chat-line.bullet::before {
+          content: "";
+          position: absolute;
+          left: 3px;
+          top: 0.72em;
+          width: 4px;
+          height: 4px;
+          border-radius: 50%;
+          background: currentColor;
         }
 
         .chat-message.user {
@@ -156,10 +208,6 @@ export default function PlantChatbot() {
             padding-right: 14px;
           }
 
-          .chat-head {
-            flex-direction: column;
-          }
-
           .chat-body {
             max-height: 42vh;
           }
@@ -179,19 +227,16 @@ export default function PlantChatbot() {
       `}</style>
 
       <div className="chat-head">
-        <div>
-          <span className="eyebrow">Asistenti Gemini për bimën</span>
-          <h2>Chatbot për bimën</h2>
-        </div>
+        <h2>Plant AI</h2>
       </div>
 
       <div className="chat-body" aria-live="polite">
         {messages.map((message, index) => (
           <div className={`chat-message ${message.role}`} key={`${message.role}-${index}`}>
-            {message.content}
+            <ChatText text={message.content} />
           </div>
         ))}
-        {loading && <div className="chat-message assistant">Duke menduar...</div>}
+        {loading && <div className="chat-message assistant">Thinking...</div>}
       </div>
 
       {error && <div className="chat-error">{error}</div>}
@@ -201,11 +246,11 @@ export default function PlantChatbot() {
           ref={inputRef}
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          placeholder="Pyet për ujitjen, temperaturën, lagështinë..."
+          placeholder="Ask about watering, temperature, humidity..."
           disabled={loading}
         />
         <button className="primary-button" type="submit" disabled={loading || !input.trim()}>
-          {loading ? "duke pyetur" : "pyet"}
+          {loading ? "asking" : "ask"}
         </button>
       </form>
     </section>

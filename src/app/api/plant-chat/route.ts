@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMoistureStatus, MOISTURE_LABELS, type Measurement } from "../../../types";
 
 const MEASUREMENTS_URL = "https://autoplant.onrender.com/measurement";
-const GEMINI_MODEL = "gemini-2.0-flash";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const GEMINI_MODELS = [
+  "gemini-2.5-flash-lite-preview-06-17",
+  "gemini-2.5-flash",
+  "gemini-1.5-flash-latest",
+];
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -12,43 +15,89 @@ type ChatMessage = {
 
 function latestContext(measurement: Measurement | null) {
   if (!measurement) {
-    return "Ende nuk ka lexime për bimën.";
+    return "No plant readings are available yet.";
   }
 
   const moistureStatus = getMoistureStatus(measurement.moisture);
 
   return [
-    `Regjistruar më: ${measurement.recorded_at}`,
-    `Temperatura: ${measurement.temperature} C`,
-    `Lagështia e ajrit: ${measurement.humidity}%`,
-    `Lagështia e tokës: ${measurement.moisture == null ? "nuk është matur" : `${measurement.moisture}%`}`,
-    `Gjendja e tokës: ${MOISTURE_LABELS[moistureStatus]}`,
+    `Recorded at: ${measurement.recorded_at}`,
+    `Temperature: ${measurement.temperature} C`,
+    `Air humidity: ${measurement.humidity}%`,
+    `Soil moisture: ${measurement.moisture == null ? "not measured" : `${measurement.moisture}%`}`,
+    `Soil status: ${MOISTURE_LABELS[moistureStatus]}`,
   ].join("\n");
 }
 
 function buildPrompt(question: string, history: ChatMessage[], latest: Measurement | null) {
   const shortHistory = history
     .slice(-4)
-    .map((message) => `${message.role === "user" ? "Përdoruesi" : "Asistenti"}: ${message.content}`)
+    .map((message) => `${message.role === "user" ? "User" : "Assistant"}: ${message.content}`)
     .join("\n");
 
-  return `Ti je asistenti i AutoPlant për kujdesin e bimëve. Përgjigju gjithmonë në shqip, me ton miqësor dhe praktik.
-Përdor kontekstin e sensorëve më poshtë kur përgjigjesh. Nëse lagështia e tokës mungon, thuaj që ende nuk është matur.
-Mos shpik lexime dhe mos pretendo llojin e bimës nëse përdoruesi nuk ta thotë.
+  return `You are AutoPlant's plant-care assistant.
+Reply in the same language the user uses. If the user mixes Albanian and English, a natural mixed reply is okay.
+Use the sensor context below. If soil moisture is missing, say it has not been measured yet.
+Do not invent readings and do not claim a plant species unless the user tells you.
+Give a complete answer and finish with a clear recommendation. Do not stop mid-sentence.
 
-Konteksti i fundit nga sensorët:
+Latest sensor context:
 ${latestContext(latest)}
 
-Biseda e fundit:
-${shortHistory || "Nuk ka bisedë të mëparshme."}
+Recent chat:
+${shortHistory || "No previous chat."}
 
-Pyetja e përdoruesit:
+User question:
 ${question}`;
 }
 
 function isQuotaError(status: number, message: string) {
   const normalized = message.toLowerCase();
   return status === 429 || normalized.includes("quota") || normalized.includes("rate limit");
+}
+
+function geminiUrl(model: string, apiKey: string) {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+}
+
+async function askGemini(model: string, apiKey: string, prompt: string) {
+  const res = await fetch(geminiUrl(model, apiKey), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.5,
+        maxOutputTokens: 900,
+      },
+    }),
+  });
+
+  const json = await res.json();
+
+  if (!res.ok) {
+    return {
+      ok: false as const,
+      status: res.status,
+      error: json?.error?.message ?? `Gemini API returned HTTP ${res.status}`,
+    };
+  }
+
+  const reply =
+    json?.candidates?.[0]?.content?.parts
+      ?.map((part: { text?: string }) => part.text ?? "")
+      .join("")
+      .trim() || "";
+
+  return {
+    ok: true as const,
+    reply,
+  };
 }
 
 export async function POST(req: NextRequest) {
@@ -66,67 +115,51 @@ export async function POST(req: NextRequest) {
     const message = body.message?.trim();
 
     if (!message) {
-      return NextResponse.json({ error: { message: "Mesazhi është i detyrueshëm" } }, { status: 400 });
+      return NextResponse.json({ error: { message: "Message is required" } }, { status: 400 });
     }
 
     const measurementRes = await fetch(MEASUREMENTS_URL, { cache: "no-store" });
 
     if (!measurementRes.ok) {
-      throw new Error(`API i matjeve ktheu HTTP ${measurementRes.status}`);
+      throw new Error(`Measurement API returned HTTP ${measurementRes.status}`);
     }
 
     const measurements = (await measurementRes.json()) as Measurement[];
     const latest = measurements[0] ?? null;
     const prompt = buildPrompt(message, body.history ?? [], latest);
+    const failures: string[] = [];
 
-    const geminiRes = await fetch(`${GEMINI_URL}?key=${encodeURIComponent(apiKey)}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.5,
-          maxOutputTokens: 300,
-        },
-      }),
-    });
+    for (const model of GEMINI_MODELS) {
+      const result = await askGemini(model, apiKey, prompt);
 
-    const geminiJson = await geminiRes.json();
-
-    if (!geminiRes.ok) {
-      const message =
-        geminiJson?.error?.message ?? `API i Gemini ktheu HTTP ${geminiRes.status}`;
-
-      if (isQuotaError(geminiRes.status, message)) {
-        return NextResponse.json(
-          {
-            error: {
-              message:
-                "Kuota e Gemini API është tejkaluar ose nuk është aktive për këtë API key. Kontrollo planin/billing në Google AI Studio ose provo përsëri më vonë.",
-            },
-          },
-          { status: 429 }
-        );
+      if (result.ok && result.reply) {
+        return NextResponse.json({
+          reply: result.reply,
+          latest,
+          model,
+        });
       }
 
-      throw new Error(message);
+      failures.push(
+        result.ok
+          ? `${model}: Empty response.`
+          : `${model}: ${result.error}`
+      );
     }
 
-    const reply =
-      geminiJson?.candidates?.[0]?.content?.parts
-        ?.map((part: { text?: string }) => part.text ?? "")
-        .join("")
-        .trim() || "Nuk arrita të krijoj përgjigje tani.";
+    const hasQuotaError = failures.some((failure) => isQuotaError(429, failure));
 
-    return NextResponse.json({
-      reply,
-      latest,
-    });
+    return NextResponse.json(
+      {
+        error: {
+          message: hasQuotaError
+            ? "Gemini quota or billing is blocking this API key. Try another key or check Google AI Studio."
+            : `No Gemini model worked with this API key. Tried: ${GEMINI_MODELS.join(", ")}.`,
+          details: failures,
+        },
+      },
+      { status: hasQuotaError ? 429 : 502 }
+    );
   } catch (error) {
     return NextResponse.json(
       { error: { message: (error as Error).message } },
