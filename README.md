@@ -54,11 +54,19 @@ The dashboard calls `http://localhost:3001` by default. To point it somewhere el
 NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
 
-For the Gemini chatbot, set the key in `.env.local`:
+For the Gemini chatbot locally, set the key in `.env.local`:
 
 ```bash
 GEMINI_API_KEY=...
 ```
+
+On Vercel, add the same variable in:
+
+```text
+Project Settings > Environment Variables
+```
+
+Use `GEMINI_API_KEY` as the name, paste the key as the value, select the environments you deploy to, then redeploy.
 
 ## API Endpoints
 
