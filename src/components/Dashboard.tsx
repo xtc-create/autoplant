@@ -221,6 +221,13 @@ export default function Dashboard() {
   const isDry = status === "dry";
   const rows = showAll ? data : data.slice(0, 15);
 
+  useEffect(() => {
+    if (!isDry || alertDismissed) return;
+
+    const id = window.setTimeout(() => setDismissed(true), 4200);
+    return () => window.clearTimeout(id);
+  }, [alertDismissed, isDry, latest?.id]);
+
   const theme = {
     bg: dark ? "#0f1412" : "#f6f8f5",
     surface: dark ? "#151b18" : "#ffffff",
@@ -278,8 +285,7 @@ export default function Dashboard() {
         }
 
         .topbar,
-        .panel-header,
-        .alert {
+        .panel-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -287,6 +293,8 @@ export default function Dashboard() {
         }
 
         .topbar {
+          position: relative;
+          z-index: 1;
           margin-bottom: 20px;
         }
 
@@ -377,19 +385,59 @@ export default function Dashboard() {
         }
 
         .alert {
-          margin-bottom: 18px;
+          position: fixed;
+          z-index: 40;
+          top: calc(env(safe-area-inset-top) + 14px);
+          right: max(14px, env(safe-area-inset-right));
+          display: grid;
+          grid-template-columns: 9px 1fr 28px;
+          align-items: center;
+          width: min(430px, calc(100vw - 28px));
+          box-shadow: 0 18px 45px rgba(15,23,42,0.16);
           border-color: rgba(180,35,24,0.28);
-          background: rgba(180,35,24,0.08);
+          background: var(--surface);
           padding: 12px 14px;
           color: ${DANGER};
           font-size: 14px;
+          line-height: 1.35;
+          animation: toast-in 180ms ease-out;
+        }
+
+        .alert::before {
+          content: "";
+          width: 9px;
+          height: 9px;
+          border-radius: 50%;
+          background: ${DANGER};
+          box-shadow: 0 0 0 5px rgba(180,35,24,0.1);
+        }
+
+        .alert span {
+          min-width: 0;
+          padding: 0 10px;
         }
 
         .dismiss {
+          display: grid;
+          place-items: center;
+          min-height: 28px;
           min-width: 34px;
           border: 0;
           color: var(--muted);
-          font-size: 18px;
+          font-size: 16px;
+          padding: 0;
+        }
+
+        @keyframes toast-in {
+          from {
+            opacity: 0;
+            transform: translateY(-8px);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .metrics {
@@ -624,13 +672,16 @@ export default function Dashboard() {
           }
 
           .topbar,
-          .alert,
           .chart-header {
             align-items: stretch;
             flex-direction: column;
           }
 
           .actions {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            padding: 6px;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             justify-content: stretch;
             width: 100%;
@@ -638,6 +689,7 @@ export default function Dashboard() {
 
           .auto-toggle,
           .actions button {
+            border-radius: 7px;
             justify-content: center;
             width: 100%;
           }
