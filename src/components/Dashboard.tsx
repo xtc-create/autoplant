@@ -671,6 +671,18 @@ export default function Dashboard() {
             padding: 16px;
           }
 
+          .dashboard-shell.has-toast {
+            padding-top: 76px;
+          }
+
+          .alert {
+            top: calc(env(safe-area-inset-top) + 12px);
+            right: 12px;
+            left: 12px;
+            width: auto;
+            padding: 12px;
+          }
+
           .topbar,
           .chart-header {
             align-items: stretch;
@@ -684,6 +696,7 @@ export default function Dashboard() {
             padding: 6px;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             justify-content: stretch;
+            gap: 6px;
             width: 100%;
           }
 
@@ -691,7 +704,15 @@ export default function Dashboard() {
           .actions button {
             border-radius: 7px;
             justify-content: center;
+            min-width: 0;
+            min-height: 44px;
             width: 100%;
+            padding: 0 8px;
+            text-align: center;
+          }
+
+          .auto-toggle input {
+            flex: 0 0 auto;
           }
 
           .metric {
@@ -756,14 +777,13 @@ export default function Dashboard() {
         }
 
         @media (max-width: 360px) {
-          .actions,
           .metrics {
             grid-template-columns: 1fr;
           }
         }
       `}</style>
 
-      <div className="dashboard-shell">
+      <div className={`dashboard-shell ${isDry && !alertDismissed ? "has-toast" : ""}`}>
         {isDry && !alertDismissed && (
           <div className="alert">
             <span>
