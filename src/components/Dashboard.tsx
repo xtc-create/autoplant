@@ -333,6 +333,7 @@ export default function Dashboard() {
 
         .auto-toggle,
         button {
+          box-sizing: border-box;
           min-height: 36px;
           border: 1px solid var(--border);
           border-radius: 8px;
@@ -690,6 +691,7 @@ export default function Dashboard() {
           }
 
           .actions {
+            box-sizing: border-box;
             border: 1px solid var(--border);
             border-radius: 8px;
             background: var(--surface);
@@ -706,6 +708,7 @@ export default function Dashboard() {
             justify-content: center;
             min-width: 0;
             min-height: 44px;
+            max-width: 100%;
             width: 100%;
             padding: 0 8px;
             text-align: center;
@@ -713,6 +716,9 @@ export default function Dashboard() {
 
           .auto-toggle input {
             flex: 0 0 auto;
+            width: 18px;
+            height: 18px;
+            margin: 0;
           }
 
           .metric {
